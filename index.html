@@ -6,6 +6,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 /* ===== BASE ===== */
+<!-- Firebase SDK (COMPAT - DÙNG CHO HTML THUẦN) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
+    authDomain: "news-website-12816.firebaseapp.com",
+    projectId: "news-website-12816",
+    storageBucket: "news-website-12816.firebasestorage.app",
+    messagingSenderId: "199423668504",
+    appId: "1:199423668504:web:c4fb109c47130bedddae6d"
+  };
+
+  // Khởi tạo Firebase
+  firebase.initializeApp(firebaseConfig);
+
+  // Kết nối Firestore
+  const db = firebase.firestore();
+</script>
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -239,19 +259,20 @@ function addNews() {
     alert("Write title and content");
     return;
   }
-  news.unshift({ title: titleInput.value, content: editor.innerHTML });
-  save();
-  renderNews();
-  titleInput.value = "";
-  editor.innerHTML = "";
-  showHome();
+
+  db.collection("news").add({
+    title: titleInput.value,
+    content: editor.innerHTML,
+    created: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    titleInput.value = "";
+    editor.innerHTML = "";
+    showHome();
+  });
 }
 
 function deleteNews(i) {
-  trashData.unshift(news[i]);
-  news.splice(i, 1);
-  save();
-  renderNews();
+  db.collection("news").doc(news[i].id).delete();
 }
 
 function restoreNews(i) {
@@ -311,8 +332,18 @@ const titleInput = document.getElementById("titleInput");
 const editor = document.getElementById("editor");
 const viewTitle = document.getElementById("viewTitle");
 const viewContent = document.getElementById("viewContent");
-
-renderNews();
+function loadNews() {
+  db.collection("news")
+    .orderBy("created", "desc")
+    .onSnapshot(snapshot => {
+      news = [];
+      snapshot.forEach(doc => {
+        news.push({ id: doc.id, ...doc.data() });
+      });
+      renderNews();
+    });
+}
+loadNews();
 </script>
 
 </body>
