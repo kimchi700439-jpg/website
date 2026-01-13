@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>News Website</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ===== BASE ===== */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+  font-size: 16px; /* chữ nền to hơn */
+  line-height: 1.6;
+}
+
+header {
+  background: #d32f2f;
+  color: white;
+  padding: 18px;
+  text-align: center;
+}
+header h1 {
+  font-size: 24px;
+}
+
+/* ===== NAV ===== */
+nav {
+  background: white;
+  padding: 10px;
+  display: flex;
+  justify-content: space-around;
+}
+nav button {
+  padding: 10px 16px;
+  border: none;
+  background: #d32f2f;
+  color: white;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+/* ===== LAYOUT ===== */
+.container {
+  padding: 16px;
+  max-width: 900px;
+  margin: auto;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ===== NEWS ITEM ===== */
+.news-item {
+  background: white;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.news-item h3 {
+  margin: 0 0 10px;
+  cursor: pointer;
+  font-size: 20px;   /* tiêu đề to hơn */
+  line-height: 1.4;
+}
+
+.news-item p {
+  font-size: 16px;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.actions button {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 14px;
+}
+
+.delete { background: #d32f2f; }
+.restore { background: #388e3c; }
+.forever { background: #555; }
+
+/* ===== EDITOR ===== */
+.editor {
+  border: 1px solid #ccc;
+  background: white;
+  padding: 14px;
+  min-height: 220px;
+  font-size: 17px;     /* chữ trong editor to */
+  line-height: 1.7;
+}
+
+/* ===== IMAGE FIX (QUAN TRỌNG) ===== */
+.editor img,
+#viewContent img {
+  max-width: 100%;     /* không tràn màn hình */
+  width: auto;
+  height: auto;
+  max-height: 420px;   /* ảnh KHÔNG quá to */
+  display: block;
+  margin: 12px auto;
+  border-radius: 8px;
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+  margin-bottom: 8px;
+}
+.toolbar button {
+  padding: 8px 12px;
+  margin-right: 5px;
+  font-size: 14px;
+}
+
+/* ===== INPUT ===== */
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+/* ===== SUBMIT ===== */
+.submit {
+  width: 100%;
+  padding: 12px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+/* ===== VIEW PAGE ===== */
+#viewTitle {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+#viewContent {
+  font-size: 17px;
+  line-height: 1.7;
+}
+</style>
+</head>
+<body>
+
+<header><h1>📰 Daily News</h1></header>
+
+<nav>
+<button onclick="showHome()">Home</button>
+<button onclick="showPost()">Post</button>
+<button onclick="showTrash()">Trash</button>
+</nav>
+
+<div class="container">
+
+<!-- HOME -->
+<div id="home">
+  <div id="newsList"></div>
+</div>
+
+<!-- VIEW -->
+<div id="view" class="hidden">
+  <h2 id="viewTitle"></h2>
+  <div id="viewContent"></div>
+  <button onclick="showHome()">⬅ Back</button>
+</div>
+
+<!-- POST -->
+<div id="post" class="hidden">
+  <h2>Post News</h2>
+  <input id="titleInput" placeholder="News title">
+
+  <div class="toolbar">
+    <button onclick="insertImage()">🖼 Image</button>
+    <button onclick="document.execCommand('bold')"><b>B</b></button>
+    <button onclick="document.execCommand('italic')"><i>I</i></button>
+  </div>
+
+  <div id="editor" class="editor" contenteditable="true"></div>
+  <button class="submit" onclick="addNews()">Publish</button>
+</div>
+
+<!-- TRASH -->
+<div id="trash" class="hidden">
+  <h2>🗑 Trash Bin</h2>
+  <div id="trashList"></div>
+</div>
+
+</div>
+
+<script>
+let news = JSON.parse(localStorage.getItem("news")) || [];
+let trashData = JSON.parse(localStorage.getItem("trash")) || [];
+
+function save() {
+  localStorage.setItem("news", JSON.stringify(news));
+  localStorage.setItem("trash", JSON.stringify(trashData));
+}
+
+function renderNews() {
+  newsList.innerHTML = "";
+  news.forEach((n, i) => {
+    newsList.innerHTML += `
+      <div class="news-item">
+        <h3 onclick="viewNews(${i})">${n.title}</h3>
+        <div class="actions">
+          <button class="delete" onclick="deleteNews(${i})">Delete</button>
+        </div>
+      </div>`;
+  });
+}
+
+function renderTrash() {
+  trashList.innerHTML = "";
+  trashData.forEach((n, i) => {
+    trashList.innerHTML += `
+      <div class="news-item">
+        <h3>${n.title}</h3>
+        <div class="actions">
+          <button class="restore" onclick="restoreNews(${i})">Restore</button>
+          <button class="forever" onclick="deleteForever(${i})">Delete Forever</button>
+        </div>
+      </div>`;
+  });
+}
+
+function addNews() {
+  if (!titleInput.value || !editor.innerHTML.trim()) {
+    alert("Write title and content");
+    return;
+  }
+  news.unshift({ title: titleInput.value, content: editor.innerHTML });
+  save();
+  renderNews();
+  titleInput.value = "";
+  editor.innerHTML = "";
+  showHome();
+}
+
+function deleteNews(i) {
+  trashData.unshift(news[i]);
+  news.splice(i, 1);
+  save();
+  renderNews();
+}
+
+function restoreNews(i) {
+  news.unshift(trashData[i]);
+  trashData.splice(i, 1);
+  save();
+  renderTrash();
+  renderNews();
+}
+
+function deleteForever(i) {
+  trashData.splice(i, 1);
+  save();
+  renderTrash();
+}
+
+function viewNews(i) {
+  showOnly(viewSection);
+  viewTitle.innerText = news[i].title;
+  viewContent.innerHTML = news[i].content;
+}
+
+function insertImage() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.onchange = () => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.execCommand("insertImage", false, reader.result);
+    };
+    reader.readAsDataURL(input.files[0]);
+  };
+  input.click();
+}
+
+function showOnly(section) {
+  homeSection.classList.add("hidden");
+  viewSection.classList.add("hidden");
+  postSection.classList.add("hidden");
+  trashSection.classList.add("hidden");
+  section.classList.remove("hidden");
+}
+
+function showHome(){ showOnly(homeSection); }
+function showPost(){ showOnly(postSection); }
+function showTrash(){ showOnly(trashSection); renderTrash(); }
+
+// DOM refs
+const newsList = document.getElementById("newsList");
+const trashList = document.getElementById("trashList");
+const homeSection = document.getElementById("home");
+const viewSection = document.getElementById("view");
+const postSection = document.getElementById("post");
+const trashSection = document.getElementById("trash");
+const titleInput = document.getElementById("titleInput");
+const editor = document.getElementById("editor");
+const viewTitle = document.getElementById("viewTitle");
+const viewContent = document.getElementById("viewContent");
+
+renderNews();
+</script>
+
+</body>
+</html>
