@@ -10,13 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  margin:0;
-  background:#f4f4f4;
-  font-size:16px;
-  line-height:1.6;
-}
+body { font-family: Arial, sans-serif; margin:0; background:#f4f4f4; font-size:16px; line-height:1.6; }
 header { background:#d32f2f; color:white; padding:18px; text-align:center; }
 header h1 { font-size:24px; }
 nav { background:white; padding:10px; display:flex; justify-content:space-around; }
@@ -68,13 +62,11 @@ input { width:100%; padding:12px; margin-bottom:12px; font-size:16px; }
 <div id="post" class="hidden">
   <h2>Post News</h2>
   <input id="titleInput" placeholder="News title">
-
   <div class="toolbar">
     <button onclick="insertImage()">🖼 Image</button>
     <button onclick="document.execCommand('bold')"><b>B</b></button>
     <button onclick="document.execCommand('italic')"><i>I</i></button>
   </div>
-
   <div id="editor" class="editor" contenteditable="true"></div>
   <button class="submit" onclick="addNews()">Publish</button>
 </div>
@@ -93,7 +85,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
   authDomain: "news-website-12816.firebaseapp.com",
   projectId: "news-website-12816",
-  storageBucket: "news-website-12816.firebasestorage.app",
+  storageBucket: "news-website-12816.appspot.com",
   messagingSenderId: "199423668504",
   appId: "1:199423668504:web:c4fb109c47130bedddae6d"
 };
@@ -123,7 +115,7 @@ function showOnly(section) {
 }
 function showHome(){ showOnly(homeSection); }
 function showPost(){ showOnly(postSection); }
-function showTrash(){ showOnly(trashSection); renderTrash(); }
+function showTrash(){ showOnly(trashSection); loadTrash(); }
 
 /* ===== INSERT IMAGE ===== */
 function insertImage() {
@@ -200,38 +192,42 @@ function viewNews(i){
 
 /* ===== DELETE ===== */
 function deleteNews(i){
-  db.collection("news").doc(news[i].id).delete();
+  if(confirm("Bạn có muốn xóa bài này?")){
+    db.collection("news").doc(news[i].id).delete();
+  }
 }
 
 /* ===== TRASH ===== */
-function renderTrash(){
+function loadTrash(){
   trashList.innerHTML="";
-  // hiện danh sách tạm thời từ localStorage
-  let trashData = JSON.parse(localStorage.getItem("trash"))||[];
-  trashData.forEach((n,i)=>{
-    trashList.innerHTML+=`
-    <div class="news-item">
-      <h3>${n.title}</h3>
-      <div class="actions">
-        <button class="restore" onclick="restoreNews(${i})">Restore</button>
-        <button class="forever" onclick="deleteForever(${i})">Delete Forever</button>
-      </div>
-    </div>`;
-  });
+  db.collection("news")
+    .where("deleted","==",true)
+    .orderBy("created","desc")
+    .get()
+    .then(snapshot=>{
+      snapshot.forEach(doc=>{
+        const n = {id:doc.id,...doc.data()};
+        trashList.innerHTML+=`
+        <div class="news-item">
+          <h3>${n.title}</h3>
+          <div class="actions">
+            <button class="restore" onclick="restoreNews('${n.id}')">Restore</button>
+            <button class="forever" onclick="deleteForever('${n.id}')">Delete Forever</button>
+          </div>
+        </div>`;
+      });
+    });
 }
-function restoreNews(i){
-  let trashData = JSON.parse(localStorage.getItem("trash"))||[];
-  news.unshift(trashData[i]);
-  trashData.splice(i,1);
-  localStorage.setItem("trash",JSON.stringify(trashData));
-  renderTrash();
-  renderNews();
+
+function restoreNews(id){
+  db.collection("news").doc(id).update({deleted:false});
+  loadTrash();
 }
-function deleteForever(i){
-  let trashData = JSON.parse(localStorage.getItem("trash"))||[];
-  trashData.splice(i,1);
-  localStorage.setItem("trash",JSON.stringify(trashData));
-  renderTrash();
+function deleteForever(id){
+  if(confirm("Xóa vĩnh viễn không thể phục hồi!")){
+    db.collection("news").doc(id).delete();
+    loadTrash();
+  }
 }
 </script>
 
