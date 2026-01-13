@@ -2,173 +2,42 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>News Website</title>
+<title>Daily News</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-/* ===== BASE ===== */
-<!-- Firebase SDK (COMPAT - DÙNG CHO HTML THUẦN) -->
+
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
-    authDomain: "news-website-12816.firebaseapp.com",
-    projectId: "news-website-12816",
-    storageBucket: "news-website-12816.firebasestorage.app",
-    messagingSenderId: "199423668504",
-    appId: "1:199423668504:web:c4fb109c47130bedddae6d"
-  };
-
-  // Khởi tạo Firebase
-  firebase.initializeApp(firebaseConfig);
-
-  // Kết nối Firestore
-  const db = firebase.firestore();
-</script>
+<style>
 body {
   font-family: Arial, sans-serif;
-  margin: 0;
-  background: #f4f4f4;
-  font-size: 16px; /* chữ nền to hơn */
-  line-height: 1.6;
+  margin:0;
+  background:#f4f4f4;
+  font-size:16px;
+  line-height:1.6;
 }
-
-header {
-  background: #d32f2f;
-  color: white;
-  padding: 18px;
-  text-align: center;
-}
-header h1 {
-  font-size: 24px;
-}
-
-/* ===== NAV ===== */
-nav {
-  background: white;
-  padding: 10px;
-  display: flex;
-  justify-content: space-around;
-}
-nav button {
-  padding: 10px 16px;
-  border: none;
-  background: #d32f2f;
-  color: white;
-  border-radius: 6px;
-  font-size: 15px;
-}
-
-/* ===== LAYOUT ===== */
-.container {
-  padding: 16px;
-  max-width: 900px;
-  margin: auto;
-}
-
-.hidden {
-  display: none;
-}
-
-/* ===== NEWS ITEM ===== */
-.news-item {
-  background: white;
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 8px;
-}
-
-.news-item h3 {
-  margin: 0 0 10px;
-  cursor: pointer;
-  font-size: 20px;   /* tiêu đề to hơn */
-  line-height: 1.4;
-}
-
-.news-item p {
-  font-size: 16px;
-}
-
-/* ===== ACTION BUTTONS ===== */
-.actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.actions button {
-  padding: 7px 12px;
-  border: none;
-  border-radius: 5px;
-  color: white;
-  font-size: 14px;
-}
-
-.delete { background: #d32f2f; }
-.restore { background: #388e3c; }
-.forever { background: #555; }
-
-/* ===== EDITOR ===== */
-.editor {
-  border: 1px solid #ccc;
-  background: white;
-  padding: 14px;
-  min-height: 220px;
-  font-size: 17px;     /* chữ trong editor to */
-  line-height: 1.7;
-}
-
-/* ===== IMAGE FIX (QUAN TRỌNG) ===== */
-.editor img,
-#viewContent img {
-  max-width: 100%;     /* không tràn màn hình */
-  width: auto;
-  height: auto;
-  max-height: 420px;   /* ảnh KHÔNG quá to */
-  display: block;
-  margin: 12px auto;
-  border-radius: 8px;
-}
-
-/* ===== TOOLBAR ===== */
-.toolbar {
-  margin-bottom: 8px;
-}
-.toolbar button {
-  padding: 8px 12px;
-  margin-right: 5px;
-  font-size: 14px;
-}
-
-/* ===== INPUT ===== */
-input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 12px;
-  font-size: 16px;
-}
-
-/* ===== SUBMIT ===== */
-.submit {
-  width: 100%;
-  padding: 12px;
-  background: #d32f2f;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-}
-
-/* ===== VIEW PAGE ===== */
-#viewTitle {
-  font-size: 24px;
-  margin-bottom: 12px;
-}
-#viewContent {
-  font-size: 17px;
-  line-height: 1.7;
-}
+header { background:#d32f2f; color:white; padding:18px; text-align:center; }
+header h1 { font-size:24px; }
+nav { background:white; padding:10px; display:flex; justify-content:space-around; }
+nav button { padding:10px 16px; border:none; background:#d32f2f; color:white; border-radius:6px; font-size:15px; }
+.container { padding:16px; max-width:900px; margin:auto; }
+.hidden { display:none; }
+.news-item { background:white; padding:16px; margin-bottom:16px; border-radius:8px; }
+.news-item h3 { margin:0 0 10px; cursor:pointer; font-size:20px; }
+.actions { display:flex; gap:10px; margin-top:10px; }
+.actions button { padding:7px 12px; border:none; border-radius:5px; color:white; font-size:14px; }
+.delete { background:#d32f2f; }
+.restore { background:#388e3c; }
+.forever { background:#555; }
+.editor { border:1px solid #ccc; background:white; padding:14px; min-height:220px; font-size:17px; line-height:1.7; }
+.editor img, #viewContent img { max-width:100%; width:auto; height:auto; max-height:420px; display:block; margin:12px auto; border-radius:8px; }
+.toolbar { margin-bottom:8px; }
+.toolbar button { padding:8px 12px; margin-right:5px; font-size:14px; }
+input { width:100%; padding:12px; margin-bottom:12px; font-size:16px; }
+.submit { width:100%; padding:12px; background:#d32f2f; color:white; border:none; border-radius:6px; font-size:16px; }
+#viewTitle { font-size:24px; margin-bottom:12px; }
+#viewContent { font-size:17px; line-height:1.7; }
 </style>
 </head>
 <body>
@@ -176,9 +45,9 @@ input {
 <header><h1>📰 Daily News</h1></header>
 
 <nav>
-<button onclick="showHome()">Home</button>
-<button onclick="showPost()">Post</button>
-<button onclick="showTrash()">Trash</button>
+  <button onclick="showHome()">Home</button>
+  <button onclick="showPost()">Post</button>
+  <button onclick="showTrash()">Trash</button>
 </nav>
 
 <div class="container">
@@ -219,82 +88,44 @@ input {
 </div>
 
 <script>
-let news = JSON.parse(localStorage.getItem("news")) || [];
-let trashData = JSON.parse(localStorage.getItem("trash")) || [];
+/* ===== FIREBASE CONFIG ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
+  authDomain: "news-website-12816.firebaseapp.com",
+  projectId: "news-website-12816",
+  storageBucket: "news-website-12816.firebasestorage.app",
+  messagingSenderId: "199423668504",
+  appId: "1:199423668504:web:c4fb109c47130bedddae6d"
+};
 
-function save() {
-  localStorage.setItem("news", JSON.stringify(news));
-  localStorage.setItem("trash", JSON.stringify(trashData));
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ===== DOM ===== */
+const newsList = document.getElementById("newsList");
+const trashList = document.getElementById("trashList");
+const homeSection = document.getElementById("home");
+const viewSection = document.getElementById("view");
+const postSection = document.getElementById("post");
+const trashSection = document.getElementById("trash");
+const titleInput = document.getElementById("titleInput");
+const editor = document.getElementById("editor");
+const viewTitle = document.getElementById("viewTitle");
+const viewContent = document.getElementById("viewContent");
+
+/* ===== HELPER ===== */
+function showOnly(section) {
+  homeSection.classList.add("hidden");
+  viewSection.classList.add("hidden");
+  postSection.classList.add("hidden");
+  trashSection.classList.add("hidden");
+  section.classList.remove("hidden");
 }
+function showHome(){ showOnly(homeSection); }
+function showPost(){ showOnly(postSection); }
+function showTrash(){ showOnly(trashSection); renderTrash(); }
 
-function renderNews() {
-  newsList.innerHTML = "";
-  news.forEach((n, i) => {
-    newsList.innerHTML += `
-      <div class="news-item">
-        <h3 onclick="viewNews(${i})">${n.title}</h3>
-        <div class="actions">
-          <button class="delete" onclick="deleteNews(${i})">Delete</button>
-        </div>
-      </div>`;
-  });
-}
-
-function renderTrash() {
-  trashList.innerHTML = "";
-  trashData.forEach((n, i) => {
-    trashList.innerHTML += `
-      <div class="news-item">
-        <h3>${n.title}</h3>
-        <div class="actions">
-          <button class="restore" onclick="restoreNews(${i})">Restore</button>
-          <button class="forever" onclick="deleteForever(${i})">Delete Forever</button>
-        </div>
-      </div>`;
-  });
-}
-
-function addNews() {
-  if (!titleInput.value || !editor.innerHTML.trim()) {
-    alert("Write title and content");
-    return;
-  }
-
-  db.collection("news").add({
-    title: titleInput.value,
-    content: editor.innerHTML,
-    created: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
-    titleInput.value = "";
-    editor.innerHTML = "";
-    showHome();
-  });
-}
-
-function deleteNews(i) {
-  db.collection("news").doc(news[i].id).delete();
-}
-
-function restoreNews(i) {
-  news.unshift(trashData[i]);
-  trashData.splice(i, 1);
-  save();
-  renderTrash();
-  renderNews();
-}
-
-function deleteForever(i) {
-  trashData.splice(i, 1);
-  save();
-  renderTrash();
-}
-
-function viewNews(i) {
-  showOnly(viewSection);
-  viewTitle.innerText = news[i].title;
-  viewContent.innerHTML = news[i].content;
-}
-
+/* ===== INSERT IMAGE ===== */
 function insertImage() {
   const input = document.createElement("input");
   input.type = "file";
@@ -309,41 +140,99 @@ function insertImage() {
   input.click();
 }
 
-function showOnly(section) {
-  homeSection.classList.add("hidden");
-  viewSection.classList.add("hidden");
-  postSection.classList.add("hidden");
-  trashSection.classList.add("hidden");
-  section.classList.remove("hidden");
+/* ===== ADD NEWS ===== */
+function addNews() {
+  if(!titleInput.value || !editor.innerHTML.trim()){
+    alert("Write title and content");
+    return;
+  }
+
+  db.collection("news").add({
+    title: titleInput.value,
+    content: editor.innerHTML,
+    created: firebase.firestore.FieldValue.serverTimestamp()
+  })
+  .then(()=>{
+    titleInput.value="";
+    editor.innerHTML="";
+    showHome();
+    alert("Đăng bài thành công!");
+  })
+  .catch(err=>{
+    console.error("Lỗi khi đăng bài:", err);
+    alert("Lỗi khi đăng bài: "+err.message);
+  });
 }
 
-function showHome(){ showOnly(homeSection); }
-function showPost(){ showOnly(postSection); }
-function showTrash(){ showOnly(trashSection); renderTrash(); }
-
-// DOM refs
-const newsList = document.getElementById("newsList");
-const trashList = document.getElementById("trashList");
-const homeSection = document.getElementById("home");
-const viewSection = document.getElementById("view");
-const postSection = document.getElementById("post");
-const trashSection = document.getElementById("trash");
-const titleInput = document.getElementById("titleInput");
-const editor = document.getElementById("editor");
-const viewTitle = document.getElementById("viewTitle");
-const viewContent = document.getElementById("viewContent");
-function loadNews() {
+/* ===== LOAD NEWS ===== */
+let news = [];
+function renderNews(){
+  newsList.innerHTML="";
+  news.forEach((n,i)=>{
+    newsList.innerHTML+=`
+    <div class="news-item">
+      <h3 onclick="viewNews(${i})">${n.title}</h3>
+      <div class="actions">
+        <button class="delete" onclick="deleteNews(${i})">Delete</button>
+      </div>
+    </div>`;
+  });
+}
+function loadNews(){
   db.collection("news")
-    .orderBy("created", "desc")
-    .onSnapshot(snapshot => {
-      news = [];
-      snapshot.forEach(doc => {
-        news.push({ id: doc.id, ...doc.data() });
+    .orderBy("created","desc")
+    .onSnapshot(snapshot=>{
+      news=[];
+      snapshot.forEach(doc=>{
+        news.push({id: doc.id,...doc.data()});
       });
       renderNews();
     });
 }
 loadNews();
+
+/* ===== VIEW NEWS ===== */
+function viewNews(i){
+  showOnly(viewSection);
+  viewTitle.innerText = news[i].title;
+  viewContent.innerHTML = news[i].content;
+}
+
+/* ===== DELETE ===== */
+function deleteNews(i){
+  db.collection("news").doc(news[i].id).delete();
+}
+
+/* ===== TRASH ===== */
+function renderTrash(){
+  trashList.innerHTML="";
+  // hiện danh sách tạm thời từ localStorage
+  let trashData = JSON.parse(localStorage.getItem("trash"))||[];
+  trashData.forEach((n,i)=>{
+    trashList.innerHTML+=`
+    <div class="news-item">
+      <h3>${n.title}</h3>
+      <div class="actions">
+        <button class="restore" onclick="restoreNews(${i})">Restore</button>
+        <button class="forever" onclick="deleteForever(${i})">Delete Forever</button>
+      </div>
+    </div>`;
+  });
+}
+function restoreNews(i){
+  let trashData = JSON.parse(localStorage.getItem("trash"))||[];
+  news.unshift(trashData[i]);
+  trashData.splice(i,1);
+  localStorage.setItem("trash",JSON.stringify(trashData));
+  renderTrash();
+  renderNews();
+}
+function deleteForever(i){
+  let trashData = JSON.parse(localStorage.getItem("trash"))||[];
+  trashData.splice(i,1);
+  localStorage.setItem("trash",JSON.stringify(trashData));
+  renderTrash();
+}
 </script>
 
 </body>
