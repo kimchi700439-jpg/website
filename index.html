@@ -5,27 +5,27 @@
 <title>Daily News</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Firebase SDK -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-body { font-family: Arial, sans-serif; margin:0; background:#f4f4f4; font-size:16px; line-height:1.6; }
-header { background:#d32f2f; color:white; padding:18px; text-align:center; }
-nav { background:white; padding:10px; display:flex; justify-content:space-around; }
-nav button { padding:10px 16px; border:none; background:#d32f2f; color:white; border-radius:6px; }
-.container { padding:16px; max-width:900px; margin:auto; }
-.hidden { display:none; }
-.news-item { background:white; padding:16px; margin-bottom:16px; border-radius:8px; }
-.news-item h3 { margin:0 0 10px; cursor:pointer; }
-.actions { margin-top:10px; }
-.actions button { padding:7px 12px; border:none; border-radius:5px; color:white; }
-.delete { background:#d32f2f; }
-.editor { border:1px solid #ccc; background:white; padding:14px; min-height:220px; }
-.editor img, #viewContent img { max-width:100%; display:block; margin:12px auto; border-radius:8px; }
-.toolbar button { padding:8px 12px; margin-right:5px; }
-input { width:100%; padding:12px; margin-bottom:12px; }
-.submit { width:100%; padding:12px; background:#d32f2f; color:white; border:none; border-radius:6px; }
+body{font-family:Arial;margin:0;background:#f4f4f4}
+header{background:#d32f2f;color:#fff;padding:18px;text-align:center}
+nav{background:#fff;padding:10px;display:flex;justify-content:space-around}
+nav button{padding:10px 16px;border:none;background:#d32f2f;color:#fff;border-radius:6px}
+.container{padding:16px;max-width:900px;margin:auto}
+.hidden{display:none}
+.news-item{background:#fff;padding:16px;margin-bottom:16px;border-radius:8px}
+.news-item h3{cursor:pointer}
+.actions button{padding:7px 12px;border:none;border-radius:5px;color:#fff}
+.delete{background:#d32f2f}
+.restore{background:#388e3c}
+.forever{background:#555}
+.editor{border:1px solid #ccc;background:#fff;padding:14px;min-height:200px}
+.editor img,#viewContent img{max-width:100%;display:block;margin:12px auto;border-radius:8px}
+input{width:100%;padding:12px;margin-bottom:12px}
+.submit{width:100%;padding:12px;background:#d32f2f;color:#fff;border:none;border-radius:6px}
 </style>
 </head>
 
@@ -36,14 +36,13 @@ input { width:100%; padding:12px; margin-bottom:12px; }
 <nav>
   <button onclick="goHome()">Home</button>
   <button onclick="showPost()">Post</button>
+  <button onclick="showTrash()">Trash</button>
 </nav>
 
 <div class="container">
 
 <!-- HOME -->
-<div id="home">
-  <div id="newsList"></div>
-</div>
+<div id="home"><div id="newsList"></div></div>
 
 <!-- VIEW -->
 <div id="view" class="hidden">
@@ -56,13 +55,15 @@ input { width:100%; padding:12px; margin-bottom:12px; }
 <div id="post" class="hidden">
   <h2>Post News</h2>
   <input id="titleInput" placeholder="News title">
-  <div class="toolbar">
-    <button onclick="insertImage()">🖼 Image</button>
-    <button onclick="document.execCommand('bold')"><b>B</b></button>
-    <button onclick="document.execCommand('italic')"><i>I</i></button>
-  </div>
+  <button onclick="insertImage()">🖼 Image</button>
   <div id="editor" class="editor" contenteditable="true"></div>
   <button class="submit" onclick="addNews()">Publish</button>
+</div>
+
+<!-- TRASH -->
+<div id="trash" class="hidden">
+  <h2>🗑 Trash Bin</h2>
+  <div id="trashList"></div>
 </div>
 
 </div>
@@ -70,48 +71,44 @@ input { width:100%; padding:12px; margin-bottom:12px; }
 <script>
 /* ===== FIREBASE ===== */
 firebase.initializeApp({
-  apiKey: "AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
-  authDomain: "news-website-12816.firebaseapp.com",
-  projectId: "news-website-12816"
+  apiKey:"AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
+  authDomain:"news-website-12816.firebaseapp.com",
+  projectId:"news-website-12816"
 });
-const db = firebase.firestore();
+const db=firebase.firestore();
 
 /* ===== DOM ===== */
-const home = document.getElementById("home");
-const view = document.getElementById("view");
-const post = document.getElementById("post");
-const newsList = document.getElementById("newsList");
-const titleInput = document.getElementById("titleInput");
-const editor = document.getElementById("editor");
-const viewTitle = document.getElementById("viewTitle");
-const viewContent = document.getElementById("viewContent");
-
-let news = [];
+const home=document.getElementById("home");
+const view=document.getElementById("view");
+const post=document.getElementById("post");
+const trash=document.getElementById("trash");
+const newsList=document.getElementById("newsList");
+const trashList=document.getElementById("trashList");
+const titleInput=document.getElementById("titleInput");
+const editor=document.getElementById("editor");
+const viewTitle=document.getElementById("viewTitle");
+const viewContent=document.getElementById("viewContent");
 
 /* ===== UTIL ===== */
-function slugify(text){
-  return text.toLowerCase().trim().replace(/[\s\W-]+/g,"-");
-}
-function showOnly(el){
-  home.classList.add("hidden");
-  view.classList.add("hidden");
-  post.classList.add("hidden");
-  el.classList.remove("hidden");
+function slugify(t){return t.toLowerCase().trim().replace(/[\s\W-]+/g,"-")}
+function showOnly(s){
+  [home,view,post,trash].forEach(x=>x.classList.add("hidden"));
+  s.classList.remove("hidden");
 }
 function goHome(){
   history.pushState({}, "", location.pathname);
   showOnly(home);
 }
-function showPost(){ showOnly(post); }
+function showPost(){showOnly(post)}
+function showTrash(){showOnly(trash);loadTrash()}
 
 /* ===== IMAGE ===== */
 function insertImage(){
-  const i = document.createElement("input");
-  i.type = "file";
-  i.accept = "image/*";
-  i.onchange = ()=>{
-    const r = new FileReader();
-    r.onload = ()=>document.execCommand("insertImage",false,r.result);
+  const i=document.createElement("input");
+  i.type="file";i.accept="image/*";
+  i.onchange=()=>{
+    const r=new FileReader();
+    r.onload=()=>document.execCommand("insertImage",false,r.result);
     r.readAsDataURL(i.files[0]);
   };
   i.click();
@@ -119,70 +116,92 @@ function insertImage(){
 
 /* ===== ADD NEWS ===== */
 function addNews(){
-  const slug = slugify(titleInput.value);
-  if(!titleInput.value || !editor.innerHTML) return alert("Missing content");
-
+  if(!titleInput.value||!editor.innerHTML) return alert("Thiếu nội dung");
+  const slug=slugify(titleInput.value);
   db.collection("news").add({
-    title: titleInput.value,
-    slug: slug,
-    content: editor.innerHTML,
-    created: firebase.firestore.FieldValue.serverTimestamp()
+    title:titleInput.value,
+    slug:slug,
+    content:editor.innerHTML,
+    deleted:false,
+    created:firebase.firestore.FieldValue.serverTimestamp()
   }).then(()=>{
-    titleInput.value="";
-    editor.innerHTML="";
+    titleInput.value="";editor.innerHTML="";
     goHome();
   });
 }
 
-/* ===== LOAD NEWS ===== */
-db.collection("news").orderBy("created","desc")
+/* ===== LOAD HOME ===== */
+db.collection("news")
+.where("deleted","==",false)
+.orderBy("created","desc")
 .onSnapshot(snap=>{
-  news=[];
   newsList.innerHTML="";
   snap.forEach(doc=>{
-    const n = {id:doc.id,...doc.data()};
-    news.push(n);
+    const n={id:doc.id,...doc.data()};
     newsList.innerHTML+=`
       <div class="news-item">
         <h3 onclick="openNews('${n.slug}')">${n.title}</h3>
         <div class="actions">
-          <button class="delete" onclick="deleteNews('${n.id}')">Delete</button>
+          <button class="delete" onclick="moveToTrash('${n.id}')">Delete</button>
         </div>
       </div>`;
   });
 });
 
-/* ===== OPEN NEWS ===== */
+/* ===== VIEW ===== */
 function openNews(slug){
   history.pushState({}, "", "?news="+slug);
   loadFromURL();
 }
-
-/* ===== DELETE ===== */
-function deleteNews(id){
-  if(confirm("Delete this article?")){
-    db.collection("news").doc(id).delete();
-  }
-}
-
-/* ===== LOAD FROM URL ===== */
 function loadFromURL(){
-  const slug = new URLSearchParams(location.search).get("news");
-  if(!slug){ showOnly(home); return; }
-
+  const slug=new URLSearchParams(location.search).get("news");
+  if(!slug){showOnly(home);return;}
   db.collection("news").where("slug","==",slug).limit(1).get()
-  .then(snap=>{
-    if(!snap.empty){
-      const d = snap.docs[0].data();
-      viewTitle.innerText = d.title;
-      viewContent.innerHTML = d.content;
+  .then(s=>{
+    if(!s.empty){
+      const d=s.docs[0].data();
+      viewTitle.innerText=d.title;
+      viewContent.innerHTML=d.content;
       showOnly(view);
     }
   });
 }
-
-window.onpopstate = loadFromURL;
+window.onpopstate=loadFromURL;
 loadFromURL();
+
+/* ===== TRASH ===== */
+function moveToTrash(id){
+  if(confirm("Chuyển vào thùng rác?")){
+    db.collection("news").doc(id).update({deleted:true});
+  }
+}
+function loadTrash(){
+  trashList.innerHTML="";
+  db.collection("news").where("deleted","==",true).get()
+  .then(snap=>{
+    snap.forEach(doc=>{
+      const n={id:doc.id,...doc.data()};
+      trashList.innerHTML+=`
+        <div class="news-item">
+          <h3>${n.title}</h3>
+          <div class="actions">
+            <button class="restore" onclick="restoreNews('${n.id}')">Restore</button>
+            <button class="forever" onclick="deleteForever('${n.id}')">Delete Forever</button>
+          </div>
+        </div>`;
+    });
+  });
+}
+function restoreNews(id){
+  db.collection("news").doc(id).update({deleted:false});
+  loadTrash();
+}
+function deleteForever(id){
+  if(confirm("Xóa vĩnh viễn?")){
+    db.collection("news").doc(id).delete();
+    loadTrash();
+  }
+}
 </script>
 
 </body>
