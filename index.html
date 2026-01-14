@@ -1,44 +1,147 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
 <title>Daily News</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Firebase SDK -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-body { font-family: Arial, sans-serif; margin:0; background:#f4f4f4; font-size:16px; line-height:1.6; }
-header { background:#d32f2f; color:white; padding:18px; text-align:center; }
-nav { background:white; padding:10px; display:flex; justify-content:space-around; }
-nav button { padding:10px 16px; border:none; background:#d32f2f; color:white; border-radius:6px; }
-.container { padding:16px; max-width:900px; margin:auto; }
-.hidden { display:none; }
-.news-item { background:white; padding:16px; margin-bottom:16px; border-radius:8px; }
-.news-item h3 { margin:0 0 10px; cursor:pointer; }
-.actions { margin-top:10px; }
-.actions button { padding:7px 12px; border:none; border-radius:5px; color:white; }
-.delete { background:#d32f2f; }
-.editor { border:1px solid #ccc; background:white; padding:14px; min-height:220px; }
-.editor img, #viewContent img { max-width:100%; display:block; margin:12px auto; border-radius:8px; }
-.toolbar button { padding:8px 12px; margin-right:5px; }
-input { width:100%; padding:12px; margin-bottom:12px; }
-.submit { width:100%; padding:12px; background:#d32f2f; color:white; border:none; border-radius:6px; }
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#f4f4f4;
+  font-size:17px;
+  line-height:1.8;
+}
+
+/* HEADER */
+header{
+  background:#d32f2f;
+  color:white;
+  padding:10px;
+  text-align:center;
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:5;
+}
+header h1{
+  font-size:20px;
+  margin:0;
+  font-weight:600;
+}
+
+/* MENU BUTTON */
+.menu-btn{
+  position:fixed;
+  top:12px;
+  left:12px;
+  background:white;
+  color:#d32f2f;
+  border:none;
+  font-size:26px;
+  padding:6px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  z-index:10000;
+}
+
+/* SIDEBAR */
+.sidebar{
+  position:fixed;
+  top:0;
+  left:-240px;
+  width:240px;
+  height:100%;
+  background:#222;
+  padding-top:70px;
+  transition:0.3s;
+  z-index:9999;
+}
+.sidebar button{
+  width:100%;
+  padding:14px;
+  background:none;
+  border:none;
+  color:white;
+  font-size:16px;
+  text-align:left;
+  cursor:pointer;
+}
+.sidebar button:hover{background:#444}
+
+/* MAIN */
+.main{
+  padding:70px 20px 30px;
+  max-width:900px;
+  margin:auto;
+}
+
+/* COMMON */
+.hidden{display:none}
+button,select,input{padding:10px;font-size:16px;margin-top:10px}
+button{cursor:pointer}
+
+/* NEWS LIST */
+.news-item{
+  background:white;
+  padding:16px;
+  border-radius:8px;
+  margin-bottom:16px;
+}
+.news-item h3{
+  margin:0 0 6px;
+  font-size:22px;
+  cursor:pointer;
+}
+
+/* VIEW */
+#viewContent{
+  font-size:18px;
+  line-height:1.9;
+}
+
+/* EDITOR */
+.editor{
+  border:1px solid #ccc;
+  background:white;
+  min-height:220px;
+  padding:12px;
+  font-size:17px;
+}
+.editor img,
+#viewContent img{
+  max-width:100%;
+  max-height:420px;
+  display:block;
+  margin:14px auto;
+  border-radius:10px;
+}
 </style>
 </head>
 
 <body>
 
-<header><h1>📰 Daily News</h1></header>
+<button class="menu-btn" onclick="toggleMenu()">☰</button>
 
-<nav>
-  <button onclick="goHome()">Home</button>
-  <button onclick="showPost()">Post</button>
-</nav>
+<div class="sidebar" id="sidebar">
+  <button onclick="filterCat('all')">🏠 Trang chủ</button>
+  <button onclick="filterCat('world')">🌍 Thời sự thế giới</button>
+  <button onclick="filterCat('crime')">⚖️ Án mạng</button>
+  <button onclick="filterCat('business')">💼 Kinh doanh</button>
+  <button onclick="filterCat('entertainment')">🎭 Giải trí</button>
+  <button onclick="showPost()">✍️ Đăng bài</button>
+</div>
 
-<div class="container">
+<header>
+  <h1>📰 Daily News</h1>
+</header>
+
+<div class="main">
 
 <!-- HOME -->
 <div id="home">
@@ -49,26 +152,38 @@ input { width:100%; padding:12px; margin-bottom:12px; }
 <div id="view" class="hidden">
   <h2 id="viewTitle"></h2>
   <div id="viewContent"></div>
-  <button onclick="goHome()">⬅ Back</button>
+  <button onclick="goHome()">⬅ Quay lại</button>
 </div>
 
 <!-- POST -->
 <div id="post" class="hidden">
-  <h2>Post News</h2>
-  <input id="titleInput" placeholder="News title">
-  <div class="toolbar">
-    <button onclick="insertImage()">🖼 Image</button>
+  <button onclick="goHome()">⬅ Trang chủ</button>
+  <h2>Đăng bài</h2>
+
+  <input id="titleInput" placeholder="Tiêu đề">
+
+  <select id="categoryInput">
+    <option value="world">🌍 Thời sự thế giới</option>
+    <option value="crime">⚖️ Án mạng</option>
+    <option value="business">💼 Kinh doanh</option>
+    <option value="entertainment">🎭 Giải trí</option>
+  </select>
+
+  <div>
+    <button onclick="insertImage()">🖼 Ảnh</button>
     <button onclick="document.execCommand('bold')"><b>B</b></button>
     <button onclick="document.execCommand('italic')"><i>I</i></button>
   </div>
+
   <div id="editor" class="editor" contenteditable="true"></div>
-  <button class="submit" onclick="addNews()">Publish</button>
+
+  <button onclick="addNews()">🚀 Đăng bài</button>
 </div>
 
 </div>
 
 <script>
-/* ===== FIREBASE ===== */
+/* FIREBASE CONFIG */
 firebase.initializeApp({
   apiKey: "AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
   authDomain: "news-website-12816.firebaseapp.com",
@@ -76,113 +191,121 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-/* ===== DOM ===== */
+/* SECTIONS */
 const home = document.getElementById("home");
-const view = document.getElementById("view");
 const post = document.getElementById("post");
-const newsList = document.getElementById("newsList");
-const titleInput = document.getElementById("titleInput");
-const editor = document.getElementById("editor");
-const viewTitle = document.getElementById("viewTitle");
-const viewContent = document.getElementById("viewContent");
+const view = document.getElementById("view");
 
-let news = [];
-
-/* ===== UTIL ===== */
-function slugify(text){
-  return text.toLowerCase().trim().replace(/[\s\W-]+/g,"-");
+/* MENU */
+function toggleMenu(){
+  sidebar.style.left = sidebar.style.left === "0px" ? "-240px" : "0px";
 }
-function showOnly(el){
+
+/* SHOW */
+function show(sec){
   home.classList.add("hidden");
-  view.classList.add("hidden");
   post.classList.add("hidden");
-  el.classList.remove("hidden");
+  view.classList.add("hidden");
+  sec.classList.remove("hidden");
+  sidebar.style.left = "-240px";
 }
-function goHome(){
-  history.pushState({}, "", location.pathname);
-  showOnly(home);
-}
-function showPost(){ showOnly(post); }
+function showPost(){ show(post); }
+function goHome(){ show(home); }
 
-/* ===== IMAGE ===== */
+/* IMAGE */
 function insertImage(){
   const i = document.createElement("input");
   i.type = "file";
   i.accept = "image/*";
-  i.onchange = ()=>{
+  i.onchange = () => {
     const r = new FileReader();
-    r.onload = ()=>document.execCommand("insertImage",false,r.result);
+    r.onload = () => document.execCommand("insertImage", false, r.result);
     r.readAsDataURL(i.files[0]);
   };
   i.click();
 }
 
-/* ===== ADD NEWS ===== */
-function addNews(){
-  const slug = slugify(titleInput.value);
-  if(!titleInput.value || !editor.innerHTML) return alert("Missing content");
-
-  db.collection("news").add({
-    title: titleInput.value,
-    slug: slug,
-    content: editor.innerHTML,
-    created: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(()=>{
-    titleInput.value="";
-    editor.innerHTML="";
-    goHome();
-  });
+/* SLUG */
+function slugify(t){
+  return t.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-|-$/g,"");
 }
 
-/* ===== LOAD NEWS ===== */
+/* ADD NEWS */
+function addNews(){
+  const title = titleInput.value.trim();
+  const content = editor.innerHTML.trim();
+  if(!title || !content){
+    alert("Vui lòng nhập tiêu đề và nội dung");
+    return;
+  }
+  db.collection("news").add({
+    title,
+    slug: slugify(title),
+    category: categoryInput.value,
+    content,
+    created: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  titleInput.value="";
+  editor.innerHTML="";
+  goHome();
+}
+
+/* LOAD + RENDER */
+let news=[], currentCat="all";
 db.collection("news").orderBy("created","desc")
-.onSnapshot(snap=>{
+.onSnapshot(s=>{
   news=[];
+  s.forEach(d=>news.push({id:d.id,...d.data()}));
+  render();
+});
+
+function render(){
   newsList.innerHTML="";
-  snap.forEach(doc=>{
-    const n = {id:doc.id,...doc.data()};
-    news.push(n);
+  news.forEach(n=>{
+    const cat = n.category || "world";
+    if(currentCat!=="all" && cat!==currentCat) return;
+
     newsList.innerHTML+=`
       <div class="news-item">
         <h3 onclick="openNews('${n.slug}')">${n.title}</h3>
-        <div class="actions">
-          <button class="delete" onclick="deleteNews('${n.id}')">Delete</button>
-        </div>
+        <small>
+          ${cat==="world"?"🌍 Thế giới":cat==="crime"?"⚖️ Án mạng":cat==="business"?"💼 Kinh doanh":"🎭 Giải trí"}
+        </small><br>
+        <select onchange="changeCat('${n.id}',this.value)">
+          <option value="world" ${cat==="world"?"selected":""}>🌍</option>
+          <option value="crime" ${cat==="crime"?"selected":""}>⚖️</option>
+          <option value="business" ${cat==="business"?"selected":""}>💼</option>
+          <option value="entertainment" ${cat==="entertainment"?"selected":""}>🎭</option>
+        </select>
+        <button onclick="del('${n.id}')">❌ Xóa</button>
       </div>`;
   });
-});
-
-/* ===== OPEN NEWS ===== */
-function openNews(slug){
-  history.pushState({}, "", "?news="+slug);
-  loadFromURL();
 }
 
-/* ===== DELETE ===== */
-function deleteNews(id){
-  if(confirm("Delete this article?")){
+function filterCat(c){
+  currentCat=c;
+  show(home);
+  render();
+}
+
+/* DELETE */
+function del(id){
+  if(confirm("Xóa bài viết?")){
     db.collection("news").doc(id).delete();
   }
 }
 
-/* ===== LOAD FROM URL ===== */
-function loadFromURL(){
-  const slug = new URLSearchParams(location.search).get("news");
-  if(!slug){ showOnly(home); return; }
-
-  db.collection("news").where("slug","==",slug).limit(1).get()
-  .then(snap=>{
-    if(!snap.empty){
-      const d = snap.docs[0].data();
-      viewTitle.innerText = d.title;
-      viewContent.innerHTML = d.content;
-      showOnly(view);
-    }
-  });
+/* VIEW */
+function openNews(slug){
+  const n=news.find(x=>x.slug===slug);
+  if(!n) return;
+  show(view);
+  viewTitle.innerText=n.title;
+  viewContent.innerHTML=n.content;
 }
-
-window.onpopstate = loadFromURL;
-loadFromURL();
 </script>
 
 </body>
