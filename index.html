@@ -5,7 +5,6 @@
 <title>Daily News</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -17,8 +16,6 @@ body{
   font-size:17px;
   line-height:1.8;
 }
-
-/* HEADER */
 header{
   background:#d32f2f;
   color:white;
@@ -30,12 +27,10 @@ header{
   z-index:5;
 }
 header h1{
-  font-size:20px;
   margin:0;
+  font-size:20px;
   font-weight:600;
 }
-
-/* MENU BUTTON */
 .menu-btn{
   position:fixed;
   top:12px;
@@ -43,14 +38,12 @@ header h1{
   background:white;
   color:#d32f2f;
   border:none;
-  font-size:26px;
-  padding:6px 12px;
+  font-size:28px;
+  padding:6px 14px;
   border-radius:8px;
   cursor:pointer;
   z-index:10000;
 }
-
-/* SIDEBAR */
 .sidebar{
   position:fixed;
   top:0;
@@ -59,7 +52,7 @@ header h1{
   height:100%;
   background:#222;
   padding-top:70px;
-  transition:0.3s;
+  transition:.3s;
   z-index:9999;
 }
 .sidebar button{
@@ -68,25 +61,17 @@ header h1{
   background:none;
   border:none;
   color:white;
-  font-size:16px;
   text-align:left;
+  font-size:16px;
   cursor:pointer;
 }
 .sidebar button:hover{background:#444}
-
-/* MAIN */
 .main{
-  padding:70px 20px 30px;
+  padding:75px 20px 30px;
   max-width:900px;
   margin:auto;
 }
-
-/* COMMON */
 .hidden{display:none}
-button,select,input{padding:10px;font-size:16px;margin-top:10px}
-button{cursor:pointer}
-
-/* NEWS LIST */
 .news-item{
   background:white;
   padding:16px;
@@ -94,24 +79,19 @@ button{cursor:pointer}
   margin-bottom:16px;
 }
 .news-item h3{
-  margin:0 0 6px;
   font-size:22px;
   cursor:pointer;
+  margin:0 0 6px;
 }
-
-/* VIEW */
 #viewContent{
   font-size:18px;
   line-height:1.9;
 }
-
-/* EDITOR */
 .editor{
   border:1px solid #ccc;
   background:white;
   min-height:220px;
   padding:12px;
-  font-size:17px;
 }
 .editor img,
 #viewContent img{
@@ -121,6 +101,12 @@ button{cursor:pointer}
   margin:14px auto;
   border-radius:10px;
 }
+select,input,button{
+  padding:10px;
+  margin-top:10px;
+  font-size:16px;
+}
+button{cursor:pointer}
 </style>
 </head>
 
@@ -129,12 +115,12 @@ button{cursor:pointer}
 <button class="menu-btn" onclick="toggleMenu()">☰</button>
 
 <div class="sidebar" id="sidebar">
-  <button onclick="filterCat('all')">🏠 Trang chủ</button>
-  <button onclick="filterCat('world')">🌍 Thời sự thế giới</button>
-  <button onclick="filterCat('crime')">⚖️ Án mạng</button>
-  <button onclick="filterCat('business')">💼 Kinh doanh</button>
-  <button onclick="filterCat('entertainment')">🎭 Giải trí</button>
-  <button onclick="showPost()">✍️ Đăng bài</button>
+  <button onclick="filterCat('all')">🏠 Home</button>
+  <button onclick="filterCat('world')">🌍 World News</button>
+  <button onclick="filterCat('crime')">⚖️ Crime</button>
+  <button onclick="filterCat('business')">💼 Business</button>
+  <button onclick="filterCat('entertainment')">🎭 Entertainment</button>
+  <button onclick="showPost()">✍️ Post</button>
 </div>
 
 <header>
@@ -143,168 +129,163 @@ button{cursor:pointer}
 
 <div class="main">
 
-<!-- HOME -->
 <div id="home">
   <div id="newsList"></div>
 </div>
 
-<!-- VIEW -->
 <div id="view" class="hidden">
   <h2 id="viewTitle"></h2>
   <div id="viewContent"></div>
-  <button onclick="goHome()">⬅ Quay lại</button>
+  <button onclick="goHome()">⬅ Back</button>
 </div>
 
-<!-- POST -->
 <div id="post" class="hidden">
-  <button onclick="goHome()">⬅ Trang chủ</button>
+  <button onclick="goHome()">⬅ Home</button>
   <h2>Đăng bài</h2>
 
-  <input id="titleInput" placeholder="Tiêu đề">
+  <input id="titleInput" placeholder="Title">
 
   <select id="categoryInput">
-    <option value="world">🌍 Thời sự thế giới</option>
-    <option value="crime">⚖️ Án mạng</option>
-    <option value="business">💼 Kinh doanh</option>
-    <option value="entertainment">🎭 Giải trí</option>
+    <option value="world">🌍 World News</option>
+    <option value="crime">⚖️ Crime</option>
+    <option value="business">💼 Business</option>
+    <option value="entertainment">🎭 Entertainment</option>
   </select>
 
   <div>
-    <button onclick="insertImage()">🖼 Ảnh</button>
+    <button onclick="insertImage()">🖼 Image</button>
     <button onclick="document.execCommand('bold')"><b>B</b></button>
     <button onclick="document.execCommand('italic')"><i>I</i></button>
   </div>
 
   <div id="editor" class="editor" contenteditable="true"></div>
-
-  <button onclick="addNews()">🚀 Đăng bài</button>
+  <button onclick="addNews()">🚀 Post</button>
 </div>
 
 </div>
 
 <script>
-/* FIREBASE CONFIG */
 firebase.initializeApp({
-  apiKey: "AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
-  authDomain: "news-website-12816.firebaseapp.com",
-  projectId: "news-website-12816"
+  apiKey:"AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
+  authDomain:"news-website-12816.firebaseapp.com",
+  projectId:"news-website-12816"
 });
-const db = firebase.firestore();
+const db=firebase.firestore();
 
-/* SECTIONS */
-const home = document.getElementById("home");
-const post = document.getElementById("post");
-const view = document.getElementById("view");
+const home=document.getElementById("home");
+const post=document.getElementById("post");
+const view=document.getElementById("view");
 
-/* MENU */
 function toggleMenu(){
-  sidebar.style.left = sidebar.style.left === "0px" ? "-240px" : "0px";
+  sidebar.style.left = sidebar.style.left==="0px" ? "-240px" : "0px";
 }
-
-/* SHOW */
 function show(sec){
   home.classList.add("hidden");
   post.classList.add("hidden");
   view.classList.add("hidden");
   sec.classList.remove("hidden");
-  sidebar.style.left = "-240px";
+  sidebar.style.left="-240px";
 }
-function showPost(){ show(post); }
-function goHome(){ show(home); }
+function showPost(){show(post)}
+function goHome(){
+  show(home);
+  location.hash="";
+}
 
-/* IMAGE */
 function insertImage(){
-  const i = document.createElement("input");
-  i.type = "file";
-  i.accept = "image/*";
-  i.onchange = () => {
-    const r = new FileReader();
-    r.onload = () => document.execCommand("insertImage", false, r.result);
+  const i=document.createElement("input");
+  i.type="file";i.accept="image/*";
+  i.onchange=()=>{
+    const r=new FileReader();
+    r.onload=()=>document.execCommand("insertImage",false,r.result);
     r.readAsDataURL(i.files[0]);
   };
   i.click();
 }
 
-/* SLUG */
 function slugify(t){
-  return t.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  return t.toLowerCase().normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
     .replace(/[^a-z0-9]+/g,"-")
     .replace(/^-|-$/g,"");
 }
 
-/* ADD NEWS */
 function addNews(){
-  const title = titleInput.value.trim();
-  const content = editor.innerHTML.trim();
-  if(!title || !content){
-    alert("Vui lòng nhập tiêu đề và nội dung");
-    return;
-  }
+  const title=titleInput.value.trim();
+  const content=editor.innerHTML.trim();
+  if(!title||!content)return alert("Thiếu nội dung");
+
   db.collection("news").add({
     title,
-    slug: slugify(title),
-    category: categoryInput.value,
+    slug:slugify(title),
+    category:categoryInput.value,
     content,
-    created: firebase.firestore.FieldValue.serverTimestamp()
+    created:firebase.firestore.FieldValue.serverTimestamp()
   });
+
   titleInput.value="";
   editor.innerHTML="";
   goHome();
 }
 
-/* LOAD + RENDER */
-let news=[], currentCat="all";
+let news=[],currentCat="all";
 db.collection("news").orderBy("created","desc")
 .onSnapshot(s=>{
   news=[];
   s.forEach(d=>news.push({id:d.id,...d.data()}));
   render();
+  openFromHash();
 });
 
 function render(){
   newsList.innerHTML="";
   news.forEach(n=>{
-    const cat = n.category || "world";
-    if(currentCat!=="all" && cat!==currentCat) return;
-
+    const cat=n.category||"world";
+    if(currentCat!=="all"&&cat!==currentCat)return;
     newsList.innerHTML+=`
       <div class="news-item">
         <h3 onclick="openNews('${n.slug}')">${n.title}</h3>
-        <small>
-          ${cat==="world"?"🌍 Thế giới":cat==="crime"?"⚖️ Án mạng":cat==="business"?"💼 Kinh doanh":"🎭 Giải trí"}
-        </small><br>
+        <small>${
+          cat==="world"?"🌍 World News":
+          cat==="crime"?"⚖️ crime":
+          cat==="business"?"💼 business":"🎭 Entertainment"
+        }</small><br>
         <select onchange="changeCat('${n.id}',this.value)">
           <option value="world" ${cat==="world"?"selected":""}>🌍</option>
           <option value="crime" ${cat==="crime"?"selected":""}>⚖️</option>
           <option value="business" ${cat==="business"?"selected":""}>💼</option>
           <option value="entertainment" ${cat==="entertainment"?"selected":""}>🎭</option>
         </select>
-        <button onclick="del('${n.id}')">❌ Xóa</button>
+        <button onclick="del('${n.id}')">❌Delete</button>
       </div>`;
   });
 }
-
 function filterCat(c){
   currentCat=c;
   show(home);
   render();
 }
-
-/* DELETE */
 function del(id){
-  if(confirm("Xóa bài viết?")){
-    db.collection("news").doc(id).delete();
-  }
+  if(confirm("delete?"))db.collection("news").doc(id).delete();
+}
+function changeCat(id,c){
+  db.collection("news").doc(id).update({category:c});
 }
 
-/* VIEW */
 function openNews(slug){
   const n=news.find(x=>x.slug===slug);
-  if(!n) return;
+  if(!n)return;
   show(view);
   viewTitle.innerText=n.title;
   viewContent.innerHTML=n.content;
+  location.hash="/"+slug;
+}
+
+function openFromHash(){
+  if(!location.hash)return;
+  const slug=location.hash.replace("#/","");
+  const n=news.find(x=>x.slug===slug);
+  if(n)openNews(slug);
 }
 </script>
 
