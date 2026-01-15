@@ -16,6 +16,13 @@ body{
   font-size:17px;
   line-height:1.8;
 }
+thumb{
+  width:100%;
+  max-height:220px;
+  object-fit:cover;
+  border-radius:10px;
+  margin-bottom:10px;
+}
 header{
   background:#d32f2f;
   color:white;
@@ -130,6 +137,14 @@ button{cursor:pointer}
 <div class="main">
 
 <div id="home">
+
+  <input
+    id="searchInput"
+    placeholder="🔍 Search..."
+    style="width:100%;padding:10px;font-size:16px;margin-bottom:15px"
+    oninput="searchNews(this.value)"
+  >
+
   <div id="newsList"></div>
 </div>
 
@@ -151,7 +166,12 @@ button{cursor:pointer}
     <option value="business">💼 Business</option>
     <option value="entertainment">🎭 Entertainment</option>
   </select>
-
+<input type="file" accept="image/*" onchange="setThumb(this)">
+<img id="thumbPreview" style="max-width:100%;margin:10px 0;border-radius:8px;display:none">
+<input
+  id="tagsInput"
+  placeholder="Tags (cách nhau bằng dấu phẩy , )"
+>
   <div>
     <button onclick="insertImage()">🖼 Image</button>
     <button onclick="document.execCommand('bold')"><b>B</b></button>
@@ -165,17 +185,28 @@ button{cursor:pointer}
 </div>
 
 <script>
+/* 🔥 FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyD8Uwas9qitijRPRhlISgzzeu-voHHbe_w",
   authDomain:"news-website-12816.firebaseapp.com",
   projectId:"news-website-12816"
 });
-const db=firebase.firestore();
+const db = firebase.firestore();
 
-const home=document.getElementById("home");
-const post=document.getElementById("post");
-const view=document.getElementById("view");
+/* 🔥 ELEMENTS */
+const home = document.getElementById("home");
+const post = document.getElementById("post");
+const view = document.getElementById("view");
 
+/* 🔥 STATE */
+let news = [];
+let currentCat = "all";
+let currentTag = "";
+let keyword = "";
+let editId = null;
+let thumbnail = "";
+
+/* 📂 MENU */
 function toggleMenu(){
   sidebar.style.left = sidebar.style.left==="0px" ? "-240px" : "0px";
 }
@@ -186,15 +217,17 @@ function show(sec){
   sec.classList.remove("hidden");
   sidebar.style.left="-240px";
 }
-function showPost(){show(post)}
+function showPost(){ show(post); }
 function goHome(){
   show(home);
   location.hash="";
 }
 
+/* 🖼️ INSERT IMAGE INTO CONTENT */
 function insertImage(){
   const i=document.createElement("input");
-  i.type="file";i.accept="image/*";
+  i.type="file";
+  i.accept="image/*";
   i.onchange=()=>{
     const r=new FileReader();
     r.onload=()=>document.execCommand("insertImage",false,r.result);
@@ -203,6 +236,20 @@ function insertImage(){
   i.click();
 }
 
+/* 🖼️ THUMBNAIL */
+function setThumb(input){
+  const file = input.files[0];
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    thumbnail = r.result;
+    thumbPreview.src = thumbnail;
+    thumbPreview.style.display = "block";
+  };
+  r.readAsDataURL(file);
+}
+
+/* 🔗 SLUG */
 function slugify(t){
   return t.toLowerCase().normalize("NFD")
     .replace(/[\u0300-\u036f]/g,"")
@@ -210,82 +257,168 @@ function slugify(t){
     .replace(/^-|-$/g,"");
 }
 
+/* ➕ ADD / UPDATE */
 function addNews(){
-  const title=titleInput.value.trim();
-  const content=editor.innerHTML.trim();
-  if(!title||!content)return alert("Thiếu nội dung");
+  const title = titleInput.value.trim();
+  const content = editor.innerHTML.trim();
+  if(!title || !content) return alert("Thiếu nội dung");
 
-  db.collection("news").add({
+  const tags = tagsInput.value
+    .split(",")
+    .map(t=>t.trim().toLowerCase())
+    .filter(t=>t);
+
+  const data = {
     title,
-    slug:slugify(title),
-    category:categoryInput.value,
+    slug: slugify(title),
+    category: categoryInput.value,
+    tags,            // 🏷️ TAGS
+    thumbnail,
     content,
-    created:firebase.firestore.FieldValue.serverTimestamp()
-  });
+    created: firebase.firestore.FieldValue.serverTimestamp()
+  };
 
-  titleInput.value="";
-  editor.innerHTML="";
+  if(editId){
+    db.collection("news").doc(editId).update(data);
+    editId = null;
+  }else{
+    db.collection("news").add(data);
+  }
+
+  titleInput.value = "";
+  editor.innerHTML = "";
+  tagsInput.value = "";
+  thumbnail = "";
+  thumbPreview.style.display = "none";
   goHome();
 }
 
-let news=[],currentCat="all";
+/* 📰 LOAD */
 db.collection("news").orderBy("created","desc")
 .onSnapshot(s=>{
-  news=[];
+  news = [];
   s.forEach(d=>news.push({id:d.id,...d.data()}));
   render();
   openFromHash();
 });
 
+/* 🔍 SEARCH */
+function searchNews(k){
+  keyword = k.toLowerCase();
+  render();
+}
+
+/* 🖥️ RENDER */
 function render(){
-  newsList.innerHTML="";
+  newsList.innerHTML = "";
+
   news.forEach(n=>{
-    const cat=n.category||"world";
-    if(currentCat!=="all"&&cat!==currentCat)return;
-    newsList.innerHTML+=`
+    const cat = n.category || "world";
+    if(currentCat!=="all" && cat!==currentCat) return;
+
+    if(currentTag){
+      if(!n.tags || !n.tags.includes(currentTag)) return;
+    }
+
+    if(keyword){
+      const text = (n.title + " " + n.content).toLowerCase();
+      if(!text.includes(keyword)) return;
+    }
+
+    const catLabel =
+      cat==="world" ? "🌍 World" :
+      cat==="crime" ? "⚖️ Crime" :
+      cat==="business" ? "💼 Business" :
+      "🎭 Entertainment";
+
+    newsList.innerHTML += `
       <div class="news-item">
+        ${n.thumbnail ? `<img src="${n.thumbnail}" class="thumb">` : ""}
+
         <h3 onclick="openNews('${n.slug}')">${n.title}</h3>
-        <small>${
-          cat==="world"?"🌍 World News":
-          cat==="crime"?"⚖️ crime":
-          cat==="business"?"💼 business":"🎭 Entertainment"
-        }</small><br>
+
+        <small>${catLabel}</small>
+
+        <div class="tags">
+          ${(n.tags||[]).map(t=>`
+            <span class="tag" onclick="filterTag('${t}')">#${t}</span>
+          `).join("")}
+        </div>
+
         <select onchange="changeCat('${n.id}',this.value)">
-          <option value="world" ${cat==="world"?"selected":""}>🌍</option>
-          <option value="crime" ${cat==="crime"?"selected":""}>⚖️</option>
-          <option value="business" ${cat==="business"?"selected":""}>💼</option>
-          <option value="entertainment" ${cat==="entertainment"?"selected":""}>🎭</option>
+          <option value="world" ${cat==="world"?"selected":""}>🌍 World</option>
+          <option value="crime" ${cat==="crime"?"selected":""}>⚖️ Crime</option>
+          <option value="business" ${cat==="business"?"selected":""}>💼 Business</option>
+          <option value="entertainment" ${cat==="entertainment"?"selected":""}>🎭 Entertainment</option>
         </select>
-        <button onclick="del('${n.id}')">❌Delete</button>
-      </div>`;
+
+        <button onclick="editNews('${n.id}')">✏️ edit</button>
+        <button onclick="del('${n.id}')">❌ DELETE</button>
+      </div>
+    `;
   });
 }
+
+/* 📂 CATEGORY & TAG */
 function filterCat(c){
-  currentCat=c;
+  currentCat = c;
+  currentTag = "";
   show(home);
   render();
 }
-function del(id){
-  if(confirm("delete?"))db.collection("news").doc(id).delete();
+function filterTag(t){
+  currentTag = t;
+  show(home);
+  render();
 }
 function changeCat(id,c){
   db.collection("news").doc(id).update({category:c});
 }
 
-function openNews(slug){
-  const n=news.find(x=>x.slug===slug);
-  if(!n)return;
-  show(view);
-  viewTitle.innerText=n.title;
-  viewContent.innerHTML=n.content;
-  location.hash="/"+slug;
+/* ❌ DELETE */
+function del(id){
+  if(confirm("Delete post?"))
+    db.collection("news").doc(id).delete();
 }
 
+/* 👁️ VIEW */
+function openNews(slug){
+  const n = news.find(x=>x.slug===slug);
+  if(!n) return;
+  show(view);
+  viewTitle.innerText = n.title;
+  viewContent.innerHTML = `
+    <div class="tags">
+      ${(n.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join("")}
+    </div>
+    ${n.content}
+  `;
+  location.hash = "/"+slug;
+}
+
+/* ✏️ EDIT */
+function editNews(id){
+  const n = news.find(x=>x.id===id);
+  if(!n) return;
+  editId = id;
+  titleInput.value = n.title;
+  categoryInput.value = n.category;
+  tagsInput.value = (n.tags||[]).join(", ");
+  editor.innerHTML = n.content;
+  thumbnail = n.thumbnail || "";
+  if(thumbnail){
+    thumbPreview.src = thumbnail;
+    thumbPreview.style.display = "block";
+  }
+  show(post);
+}
+
+/* 🔗 URL HASH */
 function openFromHash(){
-  if(!location.hash)return;
-  const slug=location.hash.replace("#/","");
-  const n=news.find(x=>x.slug===slug);
-  if(n)openNews(slug);
+  if(!location.hash) return;
+  const slug = location.hash.replace("#/","");
+  const n = news.find(x=>x.slug===slug);
+  if(n) openNews(slug);
 }
 </script>
 
